@@ -8,6 +8,7 @@
     "test": "node test",
     "dev": "npm run build && npm-run-all -p -r -l dev:server watch:js watch:html watch:css &; open http://localhost:4112",
     "dev:server": "NODE_ENV=development ./node_modules/.bin/nodemon --debug --watch server server/index.js",
+    "deploy": "gh-pages-deploy",
     "start": "NODE_ENV=production node --harmony server",
     "prebuild": "mkdir -p public/{assets,css,img,js,libs/bootstrap} && cp -R node_modules/bootstrap/dist/* public/libs/bootstrap && cp -R node_modules/animate.css/animate.min.css public/libs/animate.css && cp -R node_modules/font-awesome/css public/libs/fa/ && cp -R node_modules/font-awesome/fonts public/libs/fa/ && cp -R node_modules/font-awesome-animation/dist public/libs/faa",
     "build": "npm-run-all build:js build:html build:css build:assets",
@@ -49,6 +50,7 @@
     "eslint": "3.19.0",
     "font-awesome": "4.7.0",
     "font-awesome-animation": "0.0.10",
+    "gh-pages-deploy": "0.4.2",
     "lodash.sample": "4.2.1",
     "node-sass": "4.5.2",
     "nodemon": "1.11.0",
@@ -59,5 +61,8 @@
     "vue-lazyload": "1.0.3",
     "vue-loader": "12.0.0",
     "webpack": "2.4.1"
+  },
+  "gh-pages-deploy": {
+    "staticpath": "public"
   }
 }
