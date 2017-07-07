@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+
+###
+# echo helper functions
+###
+# Colors
+ESC_SEQ="\x1b["
+COL_RESET=$ESC_SEQ"39;49;00m"
+COL_RED=$ESC_SEQ"31;01m"
+COL_GREEN=$ESC_SEQ"32;01m"
+COL_YELLOW=$ESC_SEQ"33;01m"
+
+function ok() {
+  echo -e "$COL_GREEN[ok]$COL_RESET "$1
+}
+function bot() {
+  echo; echo -e "$COL_GREEN\[._.]/$COL_RESET - "$1
+}
+function running() {
+  echo; echo -en " ⇒ "$1"..."
+}
+function action() {
+  echo -e "$COL_YELLOW[action]$COL_RESET"; echo -en " ⇒ "$1"..."
+}
+function warn() {
+  echo -e "$COL_YELLOW[warning]$COL_RESET "$1
+}
+function error() {
+  echo -e "$COL_RED[error]$COL_RESET "$1
+}
+
+case "$1" in
+  bd)
+    cd app
+    npm run build
+    cd ..
+    VERSION_OLD=$(cat version.txt)
+    VERSION_NEW=${VERSION_OLD%.*}.$((${VERSION_OLD##*.}+1))
+    echo "Version Bump: $VERSION_OLD -> $VERSION_NEW"
+    echo $VERSION_NEW > version.txt
+    sed -i 's/version"\: "[^"]*/version"\: "'$VERSION_NEW'/' app/package.json
+    sed -i "s/mousewatch:[^\n]*/mousewatch:$VERSION_NEW/g" ops/kubernetes/deployment.yml
+    docker build -t hackd.azurecr.io/mousewatch:$VERSION_NEW .
+    docker push hackd.azurecr.io/mousewatch:$VERSION_NEW
+    docker tag hackd.azurecr.io/mousewatch:$VERSION_NEW hackd.azurecr.io/mousewatch:latest
+    docker push hackd.azurecr.io/mousewatch:latest
+    git add -A .
+    git cam "deploy $VERSION_NEW"
+    git tag $VERSION_NEW
+    git push; git push --tags
+    kubectl apply -f ops/kubernetes/deployment.yml
+    ;;
+  init)
+    bot "Making sure you have all the developer tooling"
+    echo "checking homebrew install"
+    brew_bin=$(which brew) 2>&1 > /dev/null
+    if [[ $? != 0 ]]; then
+      echo "installing homebrew..."
+      ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+      if [[ $? != 0 ]]; then
+        error "unable to install homebrew, script $0 abort!"
+        exit 2
+      fi
+    else
+      # Make sure we’re using the latest Homebrew
+      echo "updating homebrew..."
+      brew update
+      echo "before installing brew packages, we can upgrade any outdated packages."
+      read -r -p "run brew upgrade? [y|N] " response
+      if [[ $response =~ ^(y|yes|Y) ]];then
+          # Upgrade any already-installed formulae
+          echo "upgrade brew packages..."
+          brew upgrade
+          echo "brews updated..."
+      else
+          echo "skipped brew package upgrades.";
+      fi
+    fi
+    echo "looking for nvm"
+    brew list nvm > /dev/null 2>&1 | true
+    if [[ ${PIPESTATUS[0]} != 0 ]]; then
+        echo "brew install nvm"
+        brew install nvm
+        if [[ $? != 0 ]]; then
+          error "failed to install nvm! aborting..."
+          exit -1
+        fi
+    fi
+    export NVM_DIR=~/.nvm
+    source $(brew --prefix nvm)/nvm.sh
+    nvm install
+
+    echo "looking for yarn"
+    brew list yarn > /dev/null 2>&1 | true
+    if [[ ${PIPESTATUS[0]} != 0 ]]; then
+        echo "brew install yarn"
+        brew install yarn
+        if [[ $? != 0 ]]; then
+          error "failed to install yarn! aborting..."
+          exit -1
+        fi
+    fi
+
+    action "checking for doctoc"
+    which doctoc > /dev/null
+    if [ $? != 0 ]; then
+      running "installing doctoc"
+      npm i -g doctoc
+    fi
+    action "checking for yarn"
+
+    echo "looking for yarn"
+    brew list yarn > /dev/null 2>&1 | true
+    if [[ ${PIPESTATUS[0]} != 0 ]]; then
+        echo "brew install yarn"
+        brew install yarn
+        if [[ $? != 0 ]]; then
+          error "failed to install yarn! aborting..."
+          exit -1
+        fi
+    fi
+    ok "dev environment is setup"
+    ;;
+  *)
+    bot "Hi, I can do a few helpful development tricks."
+    echo -e "Run each as an argument to this script (e.g. './dev init'):"
+    echo "init - initialize your development environment (installing and running the app)"
+    ;;
+esac

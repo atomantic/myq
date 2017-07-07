@@ -1,0 +1,12 @@
+{
+  "config": [{
+    "name": "icals",
+    "value": [{
+        "style": "blue",
+        "name": "work",
+        "enabled": false,
+        "ical": "..."
+      }
+    ]
+  }]
+}

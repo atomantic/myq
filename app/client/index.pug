@@ -1,0 +1,149 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    title MyQ
+    link(rel='stylesheet', href='libs/bootstrap/css/bootstrap.min.css')
+    link(rel='stylesheet', href='libs/fa/css/font-awesome.min.css')
+    link(rel='stylesheet', href='libs/faa/font-awesome-animation.min.css')
+    link(rel='stylesheet', href='libs/animate.css')
+    link(rel='stylesheet', href='css/styles.css')
+  body
+    #app
+      .container(v-if="!isLoaded || !isSignedIn")
+        .row
+          .panel.panel-info
+            .panel-heading Loading
+            .panel-body
+              .fa.fa-space-shuttle.fa-4x.faa-passing.animated.fullpanel.faa-slow
+      .container(v-if="isLoaded && isSignedIn")
+        .row(v-if="error")
+          .panel.panel-danger
+            .panel-heading Error
+            .panel-body
+              .icon ¯\_(ツ)_/¯
+              pre: code.language-bash {{error}}
+        .row
+          .panel.panel-warning
+            .panel-heading
+              .emoticon(v-if="queue.length") \[._.]/ 
+              .emoticon.animated.bounce(v-else) \[._.]/ 
+              span &nbsp;- What's in MyQ? Check it out...
+        .row(v-if="events.length")
+            .panel.panel-success
+              .panel-heading
+                span What's Next?
+                form.form-inline.pull-right
+                  //- input#new.form-control(type="text",name="newtask",v-model="newtask", :value="newtask")
+                  button#add.btn.btn-primary.btn-xs.faa-parent.animated-hover(role='button', v-on:click="add")
+                    i.fa.fa-space-shuttle.faa-passing &nbsp;
+                    span Add
+              .panel-body
+                .col-lg-1.col-md-1.col-sm-1.col-xs-1
+                  time-list(v-bind:time="time")
+                .col-lg-11.col-md-11.col-sm-11.col-xs-11
+                  event-list(v-bind:events="queue")
+        .row(v-else)
+          transition(name="custom-transition", enter-class="animated pulse", enter-to-class="animated pulse", enter-active-class="animated pulse", leave-active-class="animated pulse")
+            .panel.panel-success(v-if="queue.length") 
+              .panel-heading Queue
+              .panel-body
+                .fa.fa-space-shuttle.fa-4x.faa-passing.animated.fullpanel.faa-slow
+            .panel.panel-danger(v-else)
+              .panel-heading Empty Queue
+              .panel-body
+                .icon ¯\_(ツ)_/¯
+        .row      
+          .col-lg-6.col-md-6.col-sm-6.col-xs-12
+            .panel.panel-success
+              .panel-heading
+                span.expand(@click="calendarListExpanded = !calendarListExpanded")
+                  i.fa.fa-caret-right(v-if="!calendarListExpanded")
+                  i.fa.fa-caret-down(v-else)
+                  span &nbsp;Calendars
+                form#search(v-if="calendarListExpanded")
+                  label Filter: 
+                  input(name="query", v-model="searchCalendars")
+              transition(name="fade")
+                .panel-body#results(v-if="calendarListExpanded")
+                  calendar-grid.calendars(enabled="1", :data="calendarList", :columns="['name', 'actions']", :config="config", :filter-key="searchCalendars")
+          .col-lg-6.col-md-6.col-sm-6.col-xs-12
+            .panel.panel-success
+              .panel-heading
+                span Find and Purge Events by Name
+              .panel-body
+                form.form-inline
+                input#query.form-control(type="text",name="query",v-model="query", :value="query")
+                button#run.btn.btn-primary.faa-parent.animated-hover(role='button', v-on:click="search")
+                  i.fa.fa-space-shuttle.faa-passing &nbsp;
+                  span Search
+                  
+                h4(v-if="running")
+                  i.fa.fa-spinner.faa-spin.animated
+                  span &nbsp;Query In-Progress 
+                  
+                .item(v-for='entry in searchEvents')
+                  span.summary {{entry.summary}}
+      #footpad
+      footer
+        nav.navbar.navbar-inverse.navbar-bottom(role='navigation')
+          .container
+            .navbar-brand
+              span.icon 🗒
+              span.brand &copy; MyQ, LLC - Adam Eivy
+            ul.nav.navbar-nav.navbar-right
+              li(v-if="isLoaded && !isSignedIn")
+                button.btn-sm.btn.btn-primary#googleAuth(v-on:click="googleAuth"): .fa.fa-sign-in Google Auth
+    script#modal-template(type='text/x-template')
+      transition(name='modal')
+        .modal-mask
+          .modal-wrapper
+            .modal-container
+              .modal-header
+                slot(name='header')
+                  | default header
+              .modal-body
+                slot(name='body')
+                  | default body
+              .modal-footer
+                slot(name='footer')
+                  | default footer
+                  button.modal-default-button(@click="$emit('close')")
+                    | OK
+    script#time-list-template(type='text/x-template')
+      .time
+        .block(v-for='block in time')
+          span(v-if="block.time==='00:00'") {{ block.day }}&nbsp;
+          span {{ block.time }}
+    script#event-list-template(type='text/x-template')
+      .event-list
+        event-item(v-for='item in events', v-bind:item="item")
+    script#event-item-template(type='text/x-template')
+      .task(v-bind:style="{ color: item.fgColor, backgroundColor: item.bgColor, height: getHeight, top: getPlacement }", v-bind:class="'color'+item.colorId+' height_'+getHeight")
+        span.summary {{item.summary}}
+    script#grid-template(type='text/x-template')
+      table.table.table-striped
+        thead
+          tr
+            th(v-for='key in columns', @click='sortBy(key)', :class='{ active: sortKey == key }')
+              | {{ key | capitalize }}
+              span.arrow(data-class="arrow", :class="sortOrders[key] > 0 ? 'asc' : 'dsc'")
+        tbody
+          tr(v-for='item in filteredData')
+            td(v-for='key in columns')
+              div(v-if='key == "actions"')
+                .btn-group
+                  button.btn-xs.btn.btn-danger.faa-parent.animated-hover(role='button', @click="setIgnore(item, true)", v-bind:disabled="_.indexOf(config.ignore, item.id)!==-1")
+                    i.fa.fa-minus-circle.faa-pulse &nbsp;
+                    span Ignore
+                  button.btn-xs.btn.btn-primary.faa-parent.animated-hover(role='button', @click="setIgnore(item, false)", v-bind:disabled="_.indexOf(config.ignore, item.id)==-1")
+                    i.fa.fa-plus-circle.faa-pulse &nbsp;
+                    span Follow
+              span(v-else-if="key == 'name'")
+                .box(data-type="cal", :style="{ color: item.foregroundColor, backgroundColor: item.backgroundColor }")
+                span {{item.summaryOverride||item.summary}}
+                
+              span(v-else, :class="item[key]===true ? 'alert alert-success' : item[key] === false ? 'alert alert-danger' : ''") {{item[key]}}
+    script(src='js/build.js')
+    script(async, defer, src="https://apis.google.com/js/api.js", onload="this.onload=function(){};app.init()"
+      onreadystatechange="if (this.readyState === 'complete') this.onload()")

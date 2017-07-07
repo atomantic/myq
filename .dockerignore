@@ -1,0 +1,16 @@
+.git
+app/node_modules
+app/client
+docs
+ops
+.dockerignore
+.DS_Store
+.editorconfig
+.eslintrc
+.gitignore
+.nvmrc
+dev
+Dockerfile
+LICENSE
+README.md
+STORY.md
