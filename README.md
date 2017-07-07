@@ -1,7 +1,7 @@
 # MyQ
 ## A Realtime Queue Manager
 
-Read the [https://raw.githubusercontent.com/atomantic/myq/master/STORY.md](STORY) to get a handle on why this exists.
+Read the [STORY](STORY.md) to get a handle on why this exists.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
