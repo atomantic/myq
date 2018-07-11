@@ -30,26 +30,6 @@ function error() {
 }
 
 case "$1" in
-  bd)
-    cd app
-    npm run build
-    cd ..
-    VERSION_OLD=$(cat version.txt)
-    VERSION_NEW=${VERSION_OLD%.*}.$((${VERSION_OLD##*.}+1))
-    echo "Version Bump: $VERSION_OLD -> $VERSION_NEW"
-    echo $VERSION_NEW > version.txt
-    sed -i 's/version"\: "[^"]*/version"\: "'$VERSION_NEW'/' app/package.json
-    sed -i "s/mousewatch:[^\n]*/mousewatch:$VERSION_NEW/g" ops/kubernetes/deployment.yml
-    docker build -t hackd.azurecr.io/mousewatch:$VERSION_NEW .
-    docker push hackd.azurecr.io/mousewatch:$VERSION_NEW
-    docker tag hackd.azurecr.io/mousewatch:$VERSION_NEW hackd.azurecr.io/mousewatch:latest
-    docker push hackd.azurecr.io/mousewatch:latest
-    git add -A .
-    git cam "deploy $VERSION_NEW"
-    git tag $VERSION_NEW
-    git push; git push --tags
-    kubectl apply -f ops/kubernetes/deployment.yml
-    ;;
   init)
     bot "Making sure you have all the developer tooling"
     echo "checking homebrew install"

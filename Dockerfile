@@ -1,4 +1,4 @@
-FROM node:6.11.0
+FROM node:8.11.3
 
 ENV NPM_CONFIG_LOGLEVEL warn
 ENV NODE_ENV production
