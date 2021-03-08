@@ -33,7 +33,7 @@
     "hapi-and-healthy": "6.0.1",
     "inert": "5.1.0",
     "jasmine-spec-reporter": "4.2.1",
-    "lodash": "4.17.10",
+    "lodash": "4.17.19",
     "lowdb": "1.0.0",
     "moment": "2.22.2",
     "moment-range": "4.0.1",
